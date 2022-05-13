@@ -50,6 +50,7 @@ public class GitHubCliImpl implements GitHubCli {
             throw new RuntimeException("sth went wrong!"); // FIXME to handle?
         }
         JsonArray releases = JsonParser.parseString(releasesStr).getAsJsonArray();
+        int totalDownloads = 0;
         for (JsonElement release : releases) {
             String releaseName = release.getAsJsonObject().get("name").getAsString();
             JsonArray assets = release.getAsJsonObject().get("assets").getAsJsonArray();
@@ -57,8 +58,10 @@ public class GitHubCliImpl implements GitHubCli {
                 String assetName = asset.getAsJsonObject().get("name").getAsString();
                 int downloadCount = asset.getAsJsonObject().get("download_count").getAsInt();
                 result.add(new Asset(releaseName, assetName, downloadCount));
+                totalDownloads += downloadCount;
             }
         }
+        result.add(new Asset("TOTAL", "", totalDownloads));
         return result;
     }
 
