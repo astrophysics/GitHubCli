@@ -58,25 +58,9 @@ public class GitHubCliApp {
         String outputStr;
 
         if("stats".equals(arg)) {
-            Stats stats = cli.getStats(repo);
-            String[] headers = {"Stat", "Value"};
-            String[][] data = {
-                    {"Stars", Integer.toString(stats.getStars())},
-                    {"Forks", Integer.toString(stats.getForks())},
-                    {"Contributors", Integer.toString(stats.getContributors())},
-                    {"Language", stats.getLanguage()}};
-            outputStr = AsciiTable.getTable(headers, data);
+            outputStr = getOutputStats(repo);
         } else if("downloads".equals(arg)) {
-            List<Asset> assets = cli.getDownloads(repo);
-            if(assets.size()>0) {
-                outputStr = AsciiTable.getTable(assets, Arrays.asList(
-                        new Column().header("RELEASE NAME").with(Asset::getReleaseName),
-                        new Column().header("DISTRIBUTION").with(Asset::getDistribution),
-                        new Column().header("DOWNLOAD COUNT").with(asset -> Integer.toString(asset.getDownloadCount()))));
-            } else {
-                outputStr = "no asset for this repository";
-            }
-
+            outputStr = getOutputDownloads(repo);
         } else {
             printHelpAndExit(options, formatter);
             outputStr = "";
@@ -93,6 +77,33 @@ public class GitHubCliApp {
             }
         }
 
+    }
+
+    private static String getOutputDownloads(String repo) {
+        String outputStr;
+        List<Asset> assets = cli.getDownloads(repo);
+        if(assets.size()>0) {
+            outputStr = AsciiTable.getTable(assets, Arrays.asList(
+                    new Column().header("RELEASE NAME").with(Asset::getReleaseName),
+                    new Column().header("DISTRIBUTION").with(Asset::getDistribution),
+                    new Column().header("DOWNLOAD COUNT").with(asset -> Integer.toString(asset.getDownloadCount()))));
+        } else {
+            outputStr = "no asset for this repository";
+        }
+        return outputStr;
+    }
+
+    private static String getOutputStats(String repo) {
+        String outputStr;
+        Stats stats = cli.getStats(repo);
+        String[] headers = {"Stat", "Value"};
+        String[][] data = {
+                {"Stars", Integer.toString(stats.getStars())},
+                {"Forks", Integer.toString(stats.getForks())},
+                {"Contributors", Integer.toString(stats.getContributors())},
+                {"Language", stats.getLanguage()}};
+        outputStr = AsciiTable.getTable(headers, data);
+        return outputStr;
     }
 
     private static void printHelpAndExit(Options options, HelpFormatter formatter) {
