@@ -12,7 +12,7 @@ import java.io.FileWriter;
 import java.util.Arrays;
 import java.util.List;
 
-public class Main {
+public class GitHubCliApp {
     static GitHubCliImpl cli = new GitHubCliImpl();
 
     public static void main(String[] args) {
@@ -43,13 +43,14 @@ public class Main {
 
         assert cmd != null;
 
-        if(cmd.hasOption("help")) {
+        if(args.length == 0 || cmd.hasOption("help")) {
             printHelpAndExit(options, formatter);
         }
         String arg = args[0];
 
         String repo = cmd.getOptionValue("repo");
         if(repo == null) {
+            System.out.println("Missing required option: repo");
             printHelpAndExit(options, formatter);
         }
         String outputFilePath = cmd.getOptionValue("output");
@@ -67,10 +68,15 @@ public class Main {
             outputStr = AsciiTable.getTable(headers, data);
         } else if("downloads".equals(arg)) {
             List<Asset> assets = cli.getDownloads(repo);
-            outputStr = AsciiTable.getTable(assets, Arrays.asList(
-                    new Column().header("RELEASE NAME").with(Asset::getReleaseName),
-                    new Column().header("DISTRIBUTION").with(Asset::getDistribution),
-                    new Column().header("DOWNLOAD COUNT").with(asset -> Integer.toString(asset.getDownloadCount()))));
+            if(assets.size()>0) {
+                outputStr = AsciiTable.getTable(assets, Arrays.asList(
+                        new Column().header("RELEASE NAME").with(Asset::getReleaseName),
+                        new Column().header("DISTRIBUTION").with(Asset::getDistribution),
+                        new Column().header("DOWNLOAD COUNT").with(asset -> Integer.toString(asset.getDownloadCount()))));
+            } else {
+                outputStr = "no asset for this repository";
+            }
+
         } else {
             printHelpAndExit(options, formatter);
             outputStr = "";

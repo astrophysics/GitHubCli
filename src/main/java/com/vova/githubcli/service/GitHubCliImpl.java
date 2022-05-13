@@ -27,9 +27,15 @@ public class GitHubCliImpl implements GitHubCli {
 
         httpConn.setRequestProperty("Accept", "application/vnd.github.v3+json");
 
-        InputStream responseStream = httpConn.getResponseCode() / 100 == 2
-                ? httpConn.getInputStream()
-                : httpConn.getErrorStream();
+        if(httpConn.getResponseCode() == 404) {
+            System.out.println("Repository not found!");
+            System.exit(1);
+        }
+        if(httpConn.getResponseCode() / 100 != 2) {
+            System.out.println("GitHub API feels bad! ("+httpConn.getResponseCode()+")");
+        }
+
+        InputStream responseStream = httpConn.getInputStream();
         Scanner s = new Scanner(responseStream).useDelimiter("\\A");
         return s.hasNext() ? s.next() : "";
     }
