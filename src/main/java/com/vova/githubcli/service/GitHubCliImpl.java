@@ -20,35 +20,17 @@ public class GitHubCliImpl implements GitHubCli {
 
     private static final String root = "https://api.github.com/repos/";
 
-    private String get(String path) throws IOException { // "https://api.github.com/repos/"+repo (leios/simuleios)
-        URL url = new URL(path);
-        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
-        httpConn.setRequestMethod("GET");
-
-        httpConn.setRequestProperty("Accept", "application/vnd.github.v3+json");
-
-        if(httpConn.getResponseCode() == 404) {
-            System.out.println("Repository not found!");
-            System.exit(1);
-        }
-        if(httpConn.getResponseCode() / 100 != 2) {
-            System.out.println("GitHub API feels bad! ("+httpConn.getResponseCode()+")");
-        }
-
-        InputStream responseStream = httpConn.getInputStream();
-        Scanner s = new Scanner(responseStream).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
-    }
-
     @Override
     public List<Asset> getDownloads(String repo) {
         List<Asset> result = new ArrayList<>();
-        String releasesStr;
+        String releasesStr = "";
         try {
             releasesStr = get(root+repo+"/releases");
-        } catch (IOException e) {
-            throw new RuntimeException("sth went wrong!"); // FIXME to handle?
+        } catch(IOException e) {
+            e.printStackTrace();
+            CliUtils.printMessageAndExit("Failed to get downloads from github API!");
         }
+
         JsonArray releases = JsonParser.parseString(releasesStr).getAsJsonArray();
         int totalDownloads = 0;
         for (JsonElement release : releases) {
@@ -67,19 +49,40 @@ public class GitHubCliImpl implements GitHubCli {
 
     @Override
     public Stats getStats(String repo) {
-        String statsStr;
-        String contributorsStr;
+        String statsStr = "";
+        String contributorsStr = "";
         try {
             statsStr = get(root+repo);
             contributorsStr = get(root+repo+"/contributors");
-        } catch(IOException e) {
-            throw new RuntimeException("sth went wrong!"); // FIXME to handle?
+        } catch (IOException e) {
+            e.printStackTrace();
+            CliUtils.printMessageAndExit("Failed to get stats from github API!");
         }
+
         JsonObject statsJson = JsonParser.parseString(statsStr).getAsJsonObject();
         int contributors = JsonParser.parseString(contributorsStr).getAsJsonArray().size();
         int stars = statsJson.get("stargazers_count").getAsInt();
         int forks = statsJson.get("forks_count").getAsInt();
         String language = statsJson.get("language").getAsString();
         return new Stats(stars, forks, contributors, language);
+    }
+
+    private String get(String path) throws IOException {
+        URL url = new URL(path);
+        HttpURLConnection httpConn = (HttpURLConnection) url.openConnection();
+        httpConn.setRequestMethod("GET");
+
+        httpConn.setRequestProperty("Accept", "application/vnd.github.v3+json");
+
+        if(httpConn.getResponseCode() == 404) {
+            CliUtils.printMessageAndExit("Repository not found!");
+        }
+        if(httpConn.getResponseCode() / 100 != 2) {
+            CliUtils.printMessageAndExit("Failed to connect to github API!");
+        }
+
+        InputStream responseStream = httpConn.getInputStream();
+        Scanner s = new Scanner(responseStream).useDelimiter("\\A");
+        return s.hasNext() ? s.next() : "";
     }
 }

@@ -9,6 +9,7 @@ import org.apache.commons.cli.*;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -71,8 +72,9 @@ public class GitHubCliApp {
         } else {
             try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {
                 writer.write(outputStr);
-            } catch (Exception e) {
+            } catch (IOException e) {
                 System.out.println("Couldn't write to " + outputFilePath);
+                e.printStackTrace();
                 System.out.println(outputStr);
             }
         }
@@ -82,13 +84,13 @@ public class GitHubCliApp {
     private static String getOutputDownloads(String repo) {
         String outputStr;
         List<Asset> assets = cli.getDownloads(repo);
-        if(assets.size()>0) {
+        if(assets.size()>1) { // including total
             outputStr = AsciiTable.getTable(assets, Arrays.asList(
                     new Column().header("RELEASE NAME").with(Asset::getReleaseName),
                     new Column().header("DISTRIBUTION").with(Asset::getDistribution),
                     new Column().header("DOWNLOAD COUNT").with(asset -> Integer.toString(asset.getDownloadCount()))));
         } else {
-            outputStr = "no asset for this repository";
+            outputStr = "no assets for this repository";
         }
         return outputStr;
     }
