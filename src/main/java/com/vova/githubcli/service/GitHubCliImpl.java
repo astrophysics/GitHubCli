@@ -83,6 +83,10 @@ public class GitHubCliImpl implements GitHubCli {
 
         InputStream responseStream = httpConn.getInputStream();
         Scanner s = new Scanner(responseStream).useDelimiter("\\A");
-        return s.hasNext() ? s.next() : "";
+        if(!s.hasNext()) {
+            throw new IOException("Empty response!");
+        } else {
+            return s.next();
+        }
     }
 }
