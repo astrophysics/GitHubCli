@@ -4,84 +4,20 @@ import com.github.freva.asciitable.AsciiTable;
 import com.github.freva.asciitable.Column;
 import com.vova.githubcli.model.Asset;
 import com.vova.githubcli.model.Stats;
-import com.vova.githubcli.service.GitHubCliImpl;
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
 public class GitHubCliApp {
-    static GitHubCliImpl cli = new GitHubCliImpl();
+    private final com.vova.githubcli.service.interfaces.GitHubCli cli;
 
-    public static void main(String[] args) {
-        Options options = new Options();
-
-        Option input = new Option("r", "repo", true, "The repository to analyze");
-        input.setRequired(false);
-        options.addOption(input);
-
-        Option output = new Option("o", "output", true, "The output path of the txt file");
-        output.setRequired(false);
-        options.addOption(output);
-
-        Option help = new Option("h", "help", false, "Print information about each command");
-        help.setRequired(false);
-        options.addOption(help);
-
-        CommandLineParser parser = new DefaultParser();
-        HelpFormatter formatter = new HelpFormatter();
-        CommandLine cmd = null;
-
-        try {
-            cmd = parser.parse(options, args);
-        } catch (ParseException e) {
-            System.out.println(e.getMessage());
-            printHelpAndExit(options, formatter);
-        }
-
-        assert cmd != null;
-
-        if(args.length == 0 || cmd.hasOption("help")) {
-            printHelpAndExit(options, formatter);
-        }
-        String arg = args[0];
-
-        String repo = cmd.getOptionValue("repo");
-        if(repo == null) {
-            System.out.println("Missing required option: repo");
-            printHelpAndExit(options, formatter);
-        }
-        String outputFilePath = cmd.getOptionValue("output");
-
-        String outputStr;
-
-        if("stats".equals(arg)) {
-            outputStr = getOutputStats(repo);
-        } else if("downloads".equals(arg)) {
-            outputStr = getOutputDownloads(repo);
-        } else {
-            printHelpAndExit(options, formatter);
-            outputStr = "";
-        }
-
-        if(outputFilePath == null) {
-            System.out.println(outputStr);
-        } else {
-            try(BufferedWriter writer = new BufferedWriter(new FileWriter(outputFilePath))) {
-                writer.write(outputStr);
-            } catch (IOException e) {
-                System.out.println("Couldn't write to " + outputFilePath);
-                e.printStackTrace();
-                System.out.println(outputStr);
-            }
-        }
-
+    public GitHubCliApp(com.vova.githubcli.service.interfaces.GitHubCli cli) {
+        this.cli = cli;
     }
 
-    private static String getOutputDownloads(String repo) {
+    public String getOutputDownloads(String repo) {
         String outputStr;
         List<Asset> assets = cli.getDownloads(repo);
         if(assets.size()>1) { // including total
@@ -95,7 +31,7 @@ public class GitHubCliApp {
         return outputStr;
     }
 
-    private static String getOutputStats(String repo) {
+    public String getOutputStats(String repo) {
         String outputStr;
         Stats stats = cli.getStats(repo);
         String[] headers = {"Stat", "Value"};
@@ -108,7 +44,7 @@ public class GitHubCliApp {
         return outputStr;
     }
 
-    private static void printHelpAndExit(Options options, HelpFormatter formatter) {
+    public void printHelpAndExit(Options options, HelpFormatter formatter) {
         formatter.printHelp("githubCli", options);
         System.exit(1);
     }

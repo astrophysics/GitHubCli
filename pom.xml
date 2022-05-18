@@ -23,7 +23,7 @@
                             <archive>
                                 <manifest>
                                     <mainClass>
-                                        com.vova.GitHubCliApp
+                                        com.vova.Main
                                     </mainClass>
                                 </manifest>
                             </archive>
